@@ -23,6 +23,7 @@ let font;
 let continueImages = [];
 let backgroundImages = [];
 let currentBackgroundImage;
+let currentContinueImage;
 
 function preload() {
   loadImages(); // 이미지 로드
@@ -50,6 +51,7 @@ function setup() {
   cardWidth = width / 4; // 카드 너비
   cardHeight = height / (numPairs + 1); // 카드 높이
   selectRandomBackground(); // 랜덤 배경 이미지 선택
+  selectRandomContinueImage(); // 랜덤 컨티뉴 이미지 선택
 }
 
 function draw() {
@@ -65,6 +67,9 @@ function draw() {
   }
 
   if (isGameOver) { // 게임 오버 상태일 경우
+    if (currentContinueImage) {
+      image(currentContinueImage, 0, 0, width, height); // 컨티뉴 이미지 표시
+    }
     fill(255);
     textSize(32);
     textAlign(CENTER, CENTER);
@@ -165,6 +170,13 @@ function selectRandomBackground() {
   }
 }
 
+function selectRandomContinueImage() {
+  if (continueImages.length > 0) {
+    let index = Math.floor(Math.random() * continueImages.length);
+    currentContinueImage = continueImages[index];
+  }
+}
+
 function displayCards() {
   let cols = 4;
   let rows = Math.ceil(totalCards / cols);
@@ -193,6 +205,7 @@ function mousePressed() {
     currentStage = 1;
     setupStage(); // 첫 번째 스테이지로 돌아가기
     selectRandomBackground(); // 새로운 배경 이미지 선택
+    selectRandomContinueImage(); // 새로운 컨티뉴 이미지 선택
     return; // 게임 계속
   }
 
@@ -230,6 +243,7 @@ function mousePressed() {
               }
               setupStage();
               selectRandomBackground(); // 새로운 배경 이미지 선택
+              selectRandomContinueImage(); // 새로운 컨티뉴 이미지 선택
             }
           }
         }
