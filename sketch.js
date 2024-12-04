@@ -21,16 +21,13 @@ let font;
 
 // 이미지 로드용 변수
 let continueImages = [];
-let backgroundImage;
+let backgroundImages = [];
+let currentBackgroundImage;
 
 function preload() {
   loadImages(); // 이미지 로드
   loadContinueImages(); // 컨티뉴 이미지 로드
-  // 백그라운드 이미지 로드
-  backgroundImage = loadImage("background/background.png", 
-    () => console.log("Background image loaded."),
-    () => console.log("The file background/background.png is missing or inaccessible.")
-  );
+  loadBackgroundImages(); // 백그라운드 이미지 로드
 }
 
 function setup() {
@@ -52,6 +49,7 @@ function setup() {
   setupStage(); // 첫 번째 스테이지 설정
   cardWidth = width / 4; // 카드 너비
   cardHeight = height / (numPairs + 1); // 카드 높이
+  selectRandomBackground(); // 랜덤 배경 이미지 선택
 }
 
 function draw() {
@@ -60,18 +58,17 @@ function draw() {
     return; // 이미지가 아직 모두 로드되지 않았으면 draw 함수 종료
   }
 
-  background(255);
+  if (currentBackgroundImage) {
+    image(currentBackgroundImage, 0, 0, width, height); // 백그라운드 이미지 표시
+  } else {
+    background(255);
+  }
 
   if (isGameOver) { // 게임 오버 상태일 경우
-    if (backgroundImage) {
-      image(backgroundImage, 0, 0, width, height); // 백그라운드 이미지 표시
-    }
-
-    // "계속 실행하고 싶을 시 클릭" 메시지 표시
     fill(255);
     textSize(32);
     textAlign(CENTER, CENTER);
-    text("click", width / 2, height / 2);
+    text("Game Over! Click to Restart", width / 2, height / 2);
     return; // draw 함수 종료
   }
 
@@ -116,6 +113,25 @@ function loadContinueImages() {
   } while (img !== null);
 }
 
+function loadBackgroundImages() {
+  // background 폴더 내 파일이 background1.png, background2.png, ... 이런 형식으로 있다고 가정하고 자동으로 로드
+  let index = 1;
+  let img;
+  do {
+    img = loadImage("background/background" + index + ".png", 
+      () => {
+        console.log("Background image loaded: background" + index);
+        backgroundImages.push(img);
+        index++;
+      },
+      () => {
+        console.log("The file background/background" + index + ".png is missing or inaccessible.");
+        img = null; // 이미지가 없을 경우 반복 종료
+      }
+    );
+  } while (img !== null);
+}
+
 function setupStage() {
   totalCards = numPairs * 2; // 카드 개수 설정
 
@@ -139,6 +155,13 @@ function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     let j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function selectRandomBackground() {
+  if (backgroundImages.length > 0) {
+    let index = Math.floor(Math.random() * backgroundImages.length);
+    currentBackgroundImage = backgroundImages[index];
   }
 }
 
@@ -169,6 +192,7 @@ function mousePressed() {
     numPairs = 3;
     currentStage = 1;
     setupStage(); // 첫 번째 스테이지로 돌아가기
+    selectRandomBackground(); // 새로운 배경 이미지 선택
     return; // 게임 계속
   }
 
@@ -205,6 +229,7 @@ function mousePressed() {
                 numPairs = maxPairs;
               }
               setupStage();
+              selectRandomBackground(); // 새로운 배경 이미지 선택
             }
           }
         }
