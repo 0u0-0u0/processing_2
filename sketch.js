@@ -3,7 +3,7 @@ let imageFileNames = ["0923", "0926", "0927", "0929", "0930", "1001", "1002", "1
 let cardOrder = []; // 카드의 정답 배열
 let flipped = []; // 카드의 뒤집힘 상태
 let matched = []; // 카드의 일치 여부
-let numPairs = 3; // 첫 번째 스테이지의 카드 쌍 수
+let numPairs; // 현재 스테이지의 카드 쌍 수
 
 let matchedPairs = 0; // 맞춘 쌍의 수
 let firstSelection = -1; // 첫 번째 카드의 인덱스
@@ -24,29 +24,55 @@ let continueImages = [];
 let backgroundImage;
 
 function preload() {
-  loadImagesForStage(numPairs); // 현재 스테이지에 필요한 이미지만 로드
+  loadImages(); // 이미지 로드
+  loadContinueImages(); // 컨티뉴 이미지 로드
+  // 백그라운드 이미지 로드
+  backgroundImage = loadImage("background/background.png", 
+    () => console.log("Background image loaded."),
+    () => console.log("The file background/background.png is missing or inaccessible.")
+  );
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight); // 원하는 화면 크기로 설정, 모바일 대응
   textFont('Nirmala UI, Arial', 32);
-  cardWidth = width / 4; // 카드 너비
-  cardHeight = height / 3; // 카드 높이
+
+  if (images.length === 0) {
+    console.log("No images found. Please check your data folder.");
+    noLoop(); // 이미지가 없으면 게임 종료
+    return;
+  }
+  if (images.length / 2 < maxPairs) {
+    console.log("Not enough images for the game to work correctly.");
+    noLoop(); // 이미지가 부족하면 게임 종료
+    return;
+  }
+
+  numPairs = 3; // 첫 번째 스테이지의 카드 쌍 수 설정
   setupStage(); // 첫 번째 스테이지 설정
+  cardWidth = width / 4; // 카드 너비
+  cardHeight = height / (numPairs + 1); // 카드 높이
 }
 
 function draw() {
+  if (images.some(img => img === undefined)) {
+    console.log("Loading images...");
+    return; // 이미지가 아직 모두 로드되지 않았으면 draw 함수 종료
+  }
+
   background(255);
 
   if (isGameOver) { // 게임 오버 상태일 경우
     if (backgroundImage) {
       image(backgroundImage, 0, 0, width, height); // 백그라운드 이미지 표시
     }
+
+    // "계속 실행하고 싶을 시 클릭" 메시지 표시
+    fill(255);
     textSize(32);
     textAlign(CENTER, CENTER);
-    fill(255);
-    text("Game Over! Click to Restart", width / 2, height / 2);
-    return;
+    text("click", width / 2, height / 2);
+    return; // draw 함수 종료
   }
 
   displayCards(); // 카드 표시
@@ -61,16 +87,33 @@ function draw() {
   }
 }
 
-function loadImagesForStage(numPairs) {
-  images = []; // 이전 스테이지의 이미지를 제거
-  for (let i = 0; i < numPairs; i++) {
-    loadImage("game_images/" + imageFileNames[i] + ".jpg", 
-      (img) => {
-        images.push(img);
-      },
+function loadImages() {
+  for (let i = 0; i < imageFileNames.length; i++) {
+    let img = loadImage("game_images/" + imageFileNames[i] + ".jpg", 
+      () => console.log("Loaded: " + imageFileNames[i]),
       () => console.log("Image load failed: " + imageFileNames[i])
     );
+    images.push(img);
   }
+}
+
+function loadContinueImages() {
+  // continue_images 폴더 내 파일이 continue1.png, continue2.png, ... 이런 형식으로 있다고 가정하고 자동으로 로드
+  let index = 1;
+  let img;
+  do {
+    img = loadImage("continue_images/continue" + index + ".png", 
+      () => {
+        console.log("Continue image loaded: continue" + index);
+        continueImages.push(img);
+        index++;
+      },
+      () => {
+        console.log("The file continue_images/continue" + index + ".png is missing or inaccessible.");
+        img = null; // 이미지가 없을 경우 반복 종료
+      }
+    );
+  } while (img !== null);
 }
 
 function setupStage() {
@@ -89,6 +132,13 @@ function setupStage() {
   shuffleArray(imageIndices);
   for (let i = 0; i < totalCards; i++) {
     cardOrder[i] = imageIndices[i];
+  }
+}
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
   }
 }
 
@@ -113,8 +163,13 @@ function displayCards() {
 
 function mousePressed() {
   if (isGameOver) {
-    restartGame();
-    return;
+    // 게임 오버 상태에서 클릭 시 다시 게임 시작
+    isGameOver = false;
+    matchedPairs = 0;
+    numPairs = 3;
+    currentStage = 1;
+    setupStage(); // 첫 번째 스테이지로 돌아가기
+    return; // 게임 계속
   }
 
   let cols = 4;
@@ -136,22 +191,22 @@ function mousePressed() {
           matched[firstSelection] = true;
           matched[secondSelection] = true;
           matchedPairs++;
+          resetSelections();
 
           if (matchedPairs === numPairs) {
             matchedPairs = 0;
-            currentStage++;
-            if (currentStage > totalStages) {
-              isGameOver = true;
+
+            if (currentStage === totalStages) {
+              isGameOver = true; // 게임 오버 상태로 전환
             } else {
+              currentStage++;
               numPairs++;
               if (numPairs > maxPairs) {
                 numPairs = maxPairs;
               }
-              loadImagesForStage(numPairs); // 다음 스테이지 이미지 로드
               setupStage();
             }
           }
-          resetSelections();
         }
       }
     }
@@ -164,24 +219,8 @@ function resetSelections() {
   isChecking = false;
 }
 
-function restartGame() {
-  isGameOver = false;
-  currentStage = 1;
-  numPairs = 3;
-  matchedPairs = 0;
-  loadImagesForStage(numPairs); // 첫 번째 스테이지 이미지 로드
-  setupStage();
-}
-
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-}
-
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight); // 윈도우 크기 변경 시 캔버스 크기 조정
   cardWidth = width / 4;
-  cardHeight = height / 3;
+  cardHeight = height / (numPairs + 1);
 }
