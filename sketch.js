@@ -240,7 +240,6 @@ function mousePressed() {
               if (numPairs > maxPairs) {
                 numPairs = maxPairs;
               }
-              loadImagesForStage(numPairs); // 다음 스테이지 이미지 로드
               setupStage();
               selectRandomBackground(); // 새로운 배경 이미지 선택
               selectRandomContinueImage(); // 새로운 컨티뉴 이미지 선택
