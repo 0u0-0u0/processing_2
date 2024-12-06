@@ -3,7 +3,7 @@ let imageFileNames = ["0923", "0926", "0927", "0929", "0930", "1001", "1002", "1
 let cardOrder = []; // 카드의 정답 배열
 let flipped = []; // 카드의 뒤집힘 상태
 let matched = []; // 카드의 일치 여부
-let numPairs; // 현재 스테이지의 카드 쌍 수
+let numPairs = 3; // 첫 번째 스테이지의 카드 쌍 수
 
 let matchedPairs = 0; // 맞춘 쌍의 수
 let firstSelection = -1; // 첫 번째 카드의 인덱스
@@ -46,7 +46,6 @@ function setup() {
     return;
   }
 
-  numPairs = 3; // 첫 번째 스테이지의 카드 쌍 수 설정
   setupStage(); // 첫 번째 스테이지 설정
   cardWidth = width / 4; // 카드 너비
   cardHeight = height / (numPairs + 1); // 카드 높이
