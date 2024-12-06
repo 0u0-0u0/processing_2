@@ -69,7 +69,7 @@ function draw() {
     if (currentContinueImage) {
       image(currentContinueImage, 0, 0, width, height); // 컨티뉴 이미지 표시
     }
-    fill(255);
+    fill(0);
     textSize(32);
     textAlign(CENTER, CENTER);
     text("Game Over! Click to Restart", width / 2, height / 2);
