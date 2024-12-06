@@ -3,7 +3,7 @@ let imageFileNames = ["0923", "0926", "0927", "0929", "0930", "1001", "1002", "1
 let cardOrder = []; // 카드의 정답 배열
 let flipped = []; // 카드의 뒤집힘 상태
 let matched = []; // 카드의 일치 여부
-let numPairs = 3; // 첫 번째 스테이지의 카드 쌍 수
+let numPairs; // 현재 스테이지의 카드 쌍 수
 
 let matchedPairs = 0; // 맞춘 쌍의 수
 let firstSelection = -1; // 첫 번째 카드의 인덱스
@@ -21,14 +21,11 @@ let font;
 
 // 이미지 로드용 변수
 let continueImages = [];
-let backgroundImages = [];
-let currentBackgroundImage;
-let currentContinueImage;
+let backgroundImage;
 
 function preload() {
   loadImages(); // 이미지 로드
   loadContinueImages(); // 컨티뉴 이미지 로드
-  loadBackgroundImages(); // 백그라운드 이미지 로드
 }
 
 function setup() {
@@ -46,11 +43,16 @@ function setup() {
     return;
   }
 
+  numPairs = 3; // 첫 번째 스테이지의 카드 쌍 수 설정
   setupStage(); // 첫 번째 스테이지 설정
   cardWidth = width / 4; // 카드 너비
   cardHeight = height / (numPairs + 1); // 카드 높이
-  selectRandomBackground(); // 랜덤 배경 이미지 선택
-  selectRandomContinueImage(); // 랜덤 컨티뉴 이미지 선택
+
+  // 백그라운드 이미지 로드
+  backgroundImage = loadImage("background/background.png", 
+    () => console.log("Background image loaded."),
+    () => console.log("The file background/background.png is missing or inaccessible.")
+  );
 }
 
 function draw() {
@@ -59,20 +61,18 @@ function draw() {
     return; // 이미지가 아직 모두 로드되지 않았으면 draw 함수 종료
   }
 
-  if (currentBackgroundImage) {
-    image(currentBackgroundImage, 0, 0, width, height); // 백그라운드 이미지 표시
-  } else {
-    background(255);
-  }
+  background(255);
 
   if (isGameOver) { // 게임 오버 상태일 경우
-    if (currentContinueImage) {
-      image(currentContinueImage, 0, 0, width, height); // 컨티뉴 이미지 표시
+    if (backgroundImage) {
+      image(backgroundImage, 0, 0, width, height); // 백그라운드 이미지 표시
     }
-    fill(0);
+
+    // "계속 실행하고 싶을 시 클릭" 메시지 표시
+    fill(255);
     textSize(32);
     textAlign(CENTER, CENTER);
-    text("Game Over! Click to Restart", width / 2, height / 2);
+    text("click", width / 2, height / 2);
     return; // draw 함수 종료
   }
 
@@ -117,25 +117,6 @@ function loadContinueImages() {
   } while (img !== null);
 }
 
-function loadBackgroundImages() {
-  // background 폴더 내 파일이 background1.png, background2.png, ... 이런 형식으로 있다고 가정하고 자동으로 로드
-  let index = 1;
-  let img;
-  do {
-    img = loadImage("background/background" + index + ".png", 
-      () => {
-        console.log("Background image loaded: background" + index);
-        backgroundImages.push(img);
-        index++;
-      },
-      () => {
-        console.log("The file background/background" + index + ".png is missing or inaccessible.");
-        img = null; // 이미지가 없을 경우 반복 종료
-      }
-    );
-  } while (img !== null);
-}
-
 function setupStage() {
   totalCards = numPairs * 2; // 카드 개수 설정
 
@@ -159,20 +140,6 @@ function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     let j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
-  }
-}
-
-function selectRandomBackground() {
-  if (backgroundImages.length > 0) {
-    let index = Math.floor(Math.random() * backgroundImages.length);
-    currentBackgroundImage = backgroundImages[index];
-  }
-}
-
-function selectRandomContinueImage() {
-  if (continueImages.length > 0) {
-    let index = Math.floor(Math.random() * continueImages.length);
-    currentContinueImage = continueImages[index];
   }
 }
 
@@ -203,8 +170,6 @@ function mousePressed() {
     numPairs = 3;
     currentStage = 1;
     setupStage(); // 첫 번째 스테이지로 돌아가기
-    selectRandomBackground(); // 새로운 배경 이미지 선택
-    selectRandomContinueImage(); // 새로운 컨티뉴 이미지 선택
     return; // 게임 계속
   }
 
@@ -241,8 +206,6 @@ function mousePressed() {
                 numPairs = maxPairs;
               }
               setupStage();
-              selectRandomBackground(); // 새로운 배경 이미지 선택
-              selectRandomContinueImage(); // 새로운 컨티뉴 이미지 선택
             }
           }
         }
@@ -255,10 +218,4 @@ function resetSelections() {
   firstSelection = -1;
   secondSelection = -1;
   isChecking = false;
-}
-
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight); // 윈도우 크기 변경 시 캔버스 크기 조정
-  cardWidth = width / 4;
-  cardHeight = height / (numPairs + 1);
 }
